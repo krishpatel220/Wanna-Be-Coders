@@ -6,6 +6,7 @@ import {
   Heart, Star, Save, PenLine,
 } from 'lucide-react';
 import Button from '../components/common/Button';
+import { useAuth } from '../context/AuthContext';
 
 const initialUser = {
   firstName: 'Henish', lastName: 'Patel', email: 'henish@example.com',
@@ -28,22 +29,46 @@ const favDestinations = [
 
 export default function ProfileScreen() {
   const navigate = useNavigate();
-  const [user, setUser] = useState(() => {
+  const auth = useAuth();
+
+  const buildUserObj = () => {
+    if (auth.user) {
+      const u = auth.user;
+      return {
+        firstName: u.firstName || u.name?.split(' ')[0] || '',
+        lastName: u.lastName || u.name?.split(' ').slice(1).join(' ') || '',
+        email: u.email || '',
+        mobile: u.phone || u.mobile || '',
+        location: u.location || '',
+        dob: u.dob || '',
+      };
+    }
     const saved = localStorage.getItem('traveloop_user');
-    return saved ? JSON.parse(saved) : initialUser;
-  });
+    if (saved) return JSON.parse(saved);
+    return { firstName: 'Traveler', lastName: '', email: '', mobile: '', location: '', dob: '' };
+  };
+
+  const [user, setUser] = useState(buildUserObj);
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState(() => {
-    const saved = localStorage.getItem('traveloop_user');
-    return saved ? JSON.parse(saved) : initialUser;
-  });
+  const [form, setForm] = useState(buildUserObj);
 
   const firstLetter = user.firstName?.charAt(0)?.toUpperCase() || 'U';
 
-  const saveProfile = () => { 
+  const saveProfile = async () => { 
     setUser(form); 
     setEditing(false); 
     localStorage.setItem('traveloop_user', JSON.stringify(form));
+    try {
+      if (auth.isAuthenticated) {
+        await auth.updateProfile({
+          name: `${form.firstName} ${form.lastName}`.trim(),
+          email: form.email,
+          phone: form.mobile,
+          location: form.location,
+          dob: form.dob,
+        });
+      }
+    } catch { /* silent */ }
   };
 
   return (

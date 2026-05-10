@@ -24,6 +24,20 @@ const userSchema = new mongoose.Schema(
       minlength: [8, 'Password must be at least 8 characters'],
       select: false, // Never return password in queries by default
     },
+    phone: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    dob: {
+      type: String,
+      default: '',
+    },
+    location: {
+      type: String,
+      trim: true,
+      default: '',
+    },
     role: {
       type: String,
       enum: ['user', 'admin'],
@@ -44,13 +58,12 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-// Index for faster email lookups
-userSchema.index({ email: 1 });
+// Note: email index is already created by unique:true above
 
 // Hash password before saving
-userSchema.pre('save', async function (next) {
+userSchema.pre('save', async function () {
   // Only hash if password was modified
-  if (!this.isModified('password')) return next();
+  if (!this.isModified('password')) return;
 
   const salt = await bcrypt.genSalt(12);
   this.password = await bcrypt.hash(this.password, salt);
@@ -59,14 +72,11 @@ userSchema.pre('save', async function (next) {
   if (!this.isNew) {
     this.passwordChangedAt = Date.now() - 1000; // subtract 1s to ensure token is created after
   }
-
-  next();
 });
 
 // Only query active users by default
-userSchema.pre(/^find/, function (next) {
+userSchema.pre(/^find/, function () {
   this.find({ isActive: { $ne: false } });
-  next();
 });
 
 /**

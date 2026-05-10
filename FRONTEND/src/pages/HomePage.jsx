@@ -8,6 +8,7 @@ import {
   StickyNote, User,
 } from 'lucide-react';
 import { topTrips, latestTrips, destinations } from '../data/trips';
+import { useAuth } from '../context/AuthContext';
 
 /* ===== Animated Counter Hook ===== */
 function useCounter(target, duration = 1500) {
@@ -28,12 +29,18 @@ function useCounter(target, duration = 1500) {
 import Logo from '../components/common/Logo';
 import AIChatbot from '../components/chat/AIChatbot';
 
-/* ===== Mock user ===== */
-const defaultUser = { firstName: 'Henish', lastName: 'Patel', email: 'henish@example.com', mobile: '+91 98765 43210' };
+/* ===== Fallback user ===== */
+const defaultUser = { firstName: 'Traveler', lastName: '', email: '', mobile: '' };
 
 export default function HomePage() {
   const navigate = useNavigate();
+  const auth = useAuth();
   const [user, setUser] = useState(() => {
+    // Use auth context user, fall back to localStorage, then default
+    if (auth.user) {
+      const u = auth.user;
+      return { firstName: u.firstName || u.name?.split(' ')[0] || 'Traveler', lastName: u.lastName || u.name?.split(' ').slice(1).join(' ') || '', email: u.email || '', mobile: u.phone || u.mobile || '' };
+    }
     const saved = localStorage.getItem('traveloop_user');
     return saved ? JSON.parse(saved) : defaultUser;
   });
@@ -66,12 +73,14 @@ export default function HomePage() {
   }, []);
 
   const toggleLike = (id) => setLikedTrips((p) => ({ ...p, [id]: !p[id] }));
-  const handleLogout = () => { setProfileOpen(false); navigate('/login'); };
+  const handleLogout = async () => { setProfileOpen(false); await auth.logout(); navigate('/login'); };
   const firstLetter = user.firstName?.charAt(0)?.toUpperCase() || 'U';
-  const saveProfile = () => { 
+  const saveProfile = async () => { 
     setUser(editForm); 
     setEditMode(false); 
     localStorage.setItem('traveloop_user', JSON.stringify(editForm));
+    // Sync to backend if authenticated
+    try { if (auth.isAuthenticated) await auth.updateProfile({ name: `${editForm.firstName} ${editForm.lastName}`.trim(), email: editForm.email, phone: editForm.mobile }); } catch { /* silent */ }
   };
 
   const allSearchableTrips = [...topTrips, ...latestTrips];

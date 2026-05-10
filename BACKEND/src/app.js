@@ -12,6 +12,7 @@ const AppError = require('./utils/AppError');
 // Route imports
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
+const tripRoutes = require('./routes/tripRoutes');
 
 const app = express();
 
@@ -64,6 +65,7 @@ app.get('/api/health', (req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/trips', tripRoutes);
 
 // ─── 404 Handler ────────────────────────────────────────────────────────────
 

@@ -1,22 +1,39 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Send, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { Send, Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import Button from '../components/common/Button';
-
 import Logo from '../components/common/Logo';
+import { useAuth } from '../context/AuthContext';
 
 export default function LoginScreen() {
   const navigate = useNavigate();
+  const { login, isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
-  const handleLogin = (e) => {
+  // If already authenticated, redirect to home
+  if (isAuthenticated) {
+    navigate('/home', { replace: true });
+    return null;
+  }
+
+  const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => navigate('/home'), 1200);
+    setErrorMsg('');
+
+    try {
+      await login(email, password);
+      navigate('/home');
+    } catch (err) {
+      setErrorMsg(err.message || 'Login failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -36,6 +53,18 @@ export default function LoginScreen() {
             <h2 className="font-poppins text-2xl font-bold text-gray-900 mb-1">Welcome Back</h2>
             <p className="text-gray-400 text-sm">Sign in to continue your journey</p>
           </div>
+
+          {/* Error message */}
+          {errorMsg && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-4 p-3 bg-red-50 border border-red-100 rounded-xl flex items-center gap-2"
+            >
+              <AlertCircle size={16} className="text-red-500 shrink-0" />
+              <p className="text-red-600 text-xs font-medium">{errorMsg}</p>
+            </motion.div>
+          )}
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="relative">

@@ -28,7 +28,7 @@ const createAndSendToken = (user, statusCode, message, res) => {
  * Register a new user account.
  */
 const register = catchAsync(async (req, res, next) => {
-  const { name, email, password, passwordConfirm } = req.body;
+  const { name, email, password, passwordConfirm, phone, dob, location } = req.body;
 
   // Check if user already exists
   const existingUser = await User.findOne({ email });
@@ -41,7 +41,9 @@ const register = catchAsync(async (req, res, next) => {
     name,
     email,
     password,
-    passwordConfirm,
+    phone: phone || '',
+    dob: dob || '',
+    location: location || '',
   });
 
   // Send welcome email (non-blocking)

@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import ProtectedRoute from './components/common/ProtectedRoute';
 import OnboardingScreen from './pages/OnboardingScreen';
 import WelcomeScreen from './pages/WelcomeScreen';
 import LoginScreen from './pages/LoginScreen';
@@ -27,28 +28,24 @@ export default function App() {
       {/* Welcome */}
       <Route path="/welcome" element={<WelcomeScreen />} />
 
-      {/* Auth */}
+      {/* Auth (public) */}
       <Route path="/login" element={<LoginScreen />} />
       <Route path="/signup" element={<SignupScreen />} />
 
-      {/* Dashboard */}
-      <Route path="/home" element={<HomePage />} />
-
-      {/* Trip pages */}
-      <Route path="/trip/:id" element={<TripDetailScreen />} />
-      <Route path="/create-trip" element={<CreateTripScreen />} />
-      <Route path="/my-trips" element={<MyTripsScreen />} />
-      <Route path="/explore" element={<ExploreScreen />} />
-      <Route path="/saved" element={<SavedScreen />} />
-
-      {/* Advanced features */}
-      <Route path="/itinerary-builder" element={<ItineraryBuilderScreen />} />
-      <Route path="/itinerary-view" element={<ItineraryViewScreen />} />
-      <Route path="/budget" element={<BudgetScreen />} />
-      <Route path="/packing" element={<PackingScreen />} />
-      <Route path="/journal" element={<JournalScreen />} />
-      <Route path="/profile" element={<ProfileScreen />} />
-      <Route path="/notifications" element={<NotificationsScreen />} />
+      {/* Protected routes — require auth */}
+      <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+      <Route path="/trip/:id" element={<ProtectedRoute><TripDetailScreen /></ProtectedRoute>} />
+      <Route path="/create-trip" element={<ProtectedRoute><CreateTripScreen /></ProtectedRoute>} />
+      <Route path="/my-trips" element={<ProtectedRoute><MyTripsScreen /></ProtectedRoute>} />
+      <Route path="/explore" element={<ProtectedRoute><ExploreScreen /></ProtectedRoute>} />
+      <Route path="/saved" element={<ProtectedRoute><SavedScreen /></ProtectedRoute>} />
+      <Route path="/itinerary-builder" element={<ProtectedRoute><ItineraryBuilderScreen /></ProtectedRoute>} />
+      <Route path="/itinerary-view" element={<ProtectedRoute><ItineraryViewScreen /></ProtectedRoute>} />
+      <Route path="/budget" element={<ProtectedRoute><BudgetScreen /></ProtectedRoute>} />
+      <Route path="/packing" element={<ProtectedRoute><PackingScreen /></ProtectedRoute>} />
+      <Route path="/journal" element={<ProtectedRoute><JournalScreen /></ProtectedRoute>} />
+      <Route path="/profile" element={<ProtectedRoute><ProfileScreen /></ProtectedRoute>} />
+      <Route path="/notifications" element={<ProtectedRoute><NotificationsScreen /></ProtectedRoute>} />
 
       {/* Catch-all */}
       <Route path="*" element={<Navigate to="/onboarding" replace />} />

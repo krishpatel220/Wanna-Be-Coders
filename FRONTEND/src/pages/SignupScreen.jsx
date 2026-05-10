@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Send, User, Mail, Phone, MapPin, Lock, Calendar, Hash, Globe } from 'lucide-react';
+import { Send, User, Mail, Phone, MapPin, Lock, Calendar, Hash, Globe, AlertCircle } from 'lucide-react';
 import Button from '../components/common/Button';
 import Logo from '../components/common/Logo';
 import { getAllCountries, getStatesForCountry, getCitiesForState } from '../data/geography';
+import { useAuth } from '../context/AuthContext';
 
 const Field = ({ icon: Icon, type = 'text', value, onChange, placeholder, half }) => (
   <div className={half ? 'flex-1 min-w-0' : 'w-full'}>
@@ -57,7 +58,7 @@ const AutocompleteField = ({ icon: Icon, value, onChange, onSelect, placeholder,
                 key={s} 
                 className="px-4 py-2.5 text-sm text-gray-700 hover:bg-[#4F46E5]/10 hover:text-[#4F46E5] cursor-pointer transition-colors"
                 onMouseDown={(e) => {
-                  e.preventDefault(); // Prevent input from losing focus and triggering blur
+                  e.preventDefault();
                   onSelect(s);
                   setIsOpen(false);
                 }}
@@ -74,11 +75,19 @@ const AutocompleteField = ({ icon: Icon, value, onChange, onSelect, placeholder,
 
 export default function SignupScreen() {
   const navigate = useNavigate();
+  const { signup, isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
   const [form, setForm] = useState({
     firstName: '', lastName: '', age: '', dob: '', mobile: '',
     country: '', state: '', address: '', email: '', password: '', confirmPassword: '',
   });
+
+  // If already authenticated, redirect
+  if (isAuthenticated) {
+    navigate('/home', { replace: true });
+    return null;
+  }
 
   const update = (field) => (e) => setForm((p) => ({ ...p, [field]: e.target.value }));
   
@@ -87,23 +96,33 @@ export default function SignupScreen() {
   const handleStateSelect = (s) => setForm((p) => ({ ...p, state: s, address: '' }));
   const handleCitySelect = (c) => setForm((p) => ({ ...p, address: c }));
 
-  const handleSignup = (e) => {
+  const handleSignup = async (e) => {
     e.preventDefault();
-    if (form.password !== form.confirmPassword) { alert('Passwords do not match!'); return; }
+    if (form.password !== form.confirmPassword) { 
+      setErrorMsg('Passwords do not match!'); 
+      return; 
+    }
     setLoading(true);
-    
-    // Save to localStorage so Profile and Home screens can use it
-    const userData = {
-      firstName: form.firstName,
-      lastName: form.lastName,
-      email: form.email,
-      mobile: form.mobile,
-      location: `${form.address ? form.address + ', ' : ''}${form.state ? form.state + ', ' : ''}${form.country}`,
-      dob: form.dob,
-    };
-    localStorage.setItem('traveloop_user', JSON.stringify(userData));
+    setErrorMsg('');
 
-    setTimeout(() => navigate('/home'), 1500);
+    try {
+      await signup(form);
+      // Also save to localStorage for backward compat with other pages
+      const userData = {
+        firstName: form.firstName,
+        lastName: form.lastName,
+        email: form.email,
+        mobile: form.mobile,
+        location: `${form.address ? form.address + ', ' : ''}${form.state ? form.state + ', ' : ''}${form.country}`,
+        dob: form.dob,
+      };
+      localStorage.setItem('traveloop_user', JSON.stringify(userData));
+      navigate('/home');
+    } catch (err) {
+      setErrorMsg(err.message || 'Signup failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -123,6 +142,18 @@ export default function SignupScreen() {
             <h2 className="font-poppins text-xl font-bold text-gray-900 mb-1">Create Account</h2>
             <p className="text-gray-400 text-sm">Join us for unforgettable journeys</p>
           </div>
+
+          {/* Error message */}
+          {errorMsg && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-4 p-3 bg-red-50 border border-red-100 rounded-xl flex items-center gap-2"
+            >
+              <AlertCircle size={16} className="text-red-500 shrink-0" />
+              <p className="text-red-600 text-xs font-medium">{errorMsg}</p>
+            </motion.div>
+          )}
 
           <form onSubmit={handleSignup} className="space-y-3.5">
             <div className="flex gap-3">

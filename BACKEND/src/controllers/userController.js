@@ -33,7 +33,7 @@ const updateMe = catchAsync(async (req, res, next) => {
   }
 
   // 2) Filter to only allowed fields
-  const filteredBody = filterObj(req.body, 'name', 'email');
+  const filteredBody = filterObj(req.body, 'name', 'email', 'phone', 'dob', 'location');
 
   // 3) Update user
   const updatedUser = await User.findByIdAndUpdate(req.user.id, filteredBody, {
